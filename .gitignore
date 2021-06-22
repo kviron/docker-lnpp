@@ -1,2 +1,3 @@
 /databases/*
-/htm/*
+/html/*
+!/html/localhost/*

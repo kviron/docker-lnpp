@@ -1,42 +1,41 @@
 FROM php:7.4-fpm-alpine
 
-# Install gd, iconv, mbstring, mysql, soap, sockets, zip, and zlib extensions
-# see example at https://hub.docker.com/_/php/
-RUN apk add --update \
-        $PHPIZE_DEPS \
-        freetype-dev \
-        git \
-        libjpeg-turbo-dev \
-        libpng-dev \
-        libxml2-dev \
-        libzip-dev \
-        openssh-client \
-        php7-json \
-        php7-openssl \
-        php7-pdo \
-        php7-pdo_mysql \
-        php7-session \
-        php7-simplexml \
-        php7-tokenizer \
-        php7-xml \
-        imagemagick \
-        imagemagick-libs \
-        imagemagick-dev \
-        php7-imagick \
-        php7-pcntl \
-        php7-zip \
-        sqlite \
-    && docker-php-ext-install iconv soap sockets exif bcmath pdo_mysql mysqli \
-    && docker-php-ext-configure gd --with-jpeg --with-freetype \
-    && docker-php-ext-install gd \
-    && docker-php-ext-install zip
+# Install tools required for build stage
+RUN apk add --update --no-cache \
+    bash curl wget rsync ca-certificates openssl openssh git tzdata openntpd \
+    libxrender fontconfig libc6-compat \
+    mysql-client gnupg binutils-gold autoconf \
+    g++ gcc gnupg libgcc linux-headers make
 
+# Install composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin --filename=composer \
+ && chmod 755 /usr/bin/composer
+
+# Install additional PHP libraries
+RUN docker-php-ext-install bcmath pdo_mysql mysqli
+
+# Install mbstring extension
+RUN apk add --no-cache \
+    oniguruma-dev \
+    && docker-php-ext-install mbstring \
+    && docker-php-ext-enable mbstring \
+    && rm -rf /tmp/*
+
+
+# Install libraries for compiling GD, then build it
+RUN apk add --no-cache freetype libpng libjpeg-turbo freetype-dev libpng-dev libjpeg-turbo-dev \
+ && docker-php-ext-install gd \
+ && apk del --no-cache freetype-dev libpng-dev libjpeg-turbo-dev
+
+# Add ZIP archives support
+RUN apk add --update --no-cache zlib-dev libzip-dev \
+ && docker-php-ext-install zip 
 
 # Install xdebug
-RUN pecl install xdebug \
- && docker-php-ext-enable xdebug
+#RUN pecl install xdebug \
+# && docker-php-ext-enable xdebug
 
 # Enable XDebug
-ADD xdebug.ini /usr/local/etc/php/conf.d/xdebug.ini
+#ADD xdebug.ini /usr/local/etc/php/conf.d/xdebug.ini
 
 WORKDIR /var/www/html/

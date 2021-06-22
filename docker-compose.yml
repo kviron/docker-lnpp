@@ -1,0 +1,37 @@
+version: "3.5"
+
+services:
+  nginx:
+    build: ./nginx
+    ports:
+      - 80:80
+    volumes:
+      - ./html:/var/www/html
+      - ./nginx/templates:/etc/nginx/templates
+      - ./nginx/conf.d:/etc/nginx/conf.d/
+
+  php-fpm:
+    build: ./php
+    volumes:
+      - ./html:/var/www/html
+
+  mardiadb:
+    image: mariadb:10.4
+    ports:
+    - 3306:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: docker
+      MYSQL_USER: docker
+      MYSQL_PASSWORD: docker
+    volumes:
+    - ./databases/mariadb:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    ports:
+    - 82:80
+    environment:
+      PMA_HOST: mardiadb
+      PMA_USER: root
+      PMA_PASSWORD: root

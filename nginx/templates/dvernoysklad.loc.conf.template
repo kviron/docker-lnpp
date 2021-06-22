@@ -1,0 +1,28 @@
+server {
+    listen *:80;
+    server_name dvernoysklad.loc;
+
+    root /var/www/html/dvernoysklad.loc/public_html;
+    index index.php index.html;
+
+    charset utf-8;
+
+    access_log /var/www/html/dvernoysklad.loc/log/access.log;
+    error_log  /var/www/html/dvernoysklad.loc/log/error.log;
+
+    location ~ [^/]\.php(/|$) {
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        fastcgi_pass php-fpm:9000;
+        fastcgi_index index.php;
+        include fastcgi_params;
+
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param REMOTE_ADDR $remote_addr;
+
+        fastcgi_buffer_size 1024k;
+        fastcgi_buffers 500 512k;
+        fastcgi_connect_timeout 1200;
+        fastcgi_send_timeout 1200;
+        fastcgi_read_timeout 200;
+    }
+}
